@@ -116,6 +116,6 @@ exports.searchStores = async (req,res) =>{
         score:{$meta:'textScore'}
     })
     //limit to certain number of results
-    .limit(5);
+    .limit(5); 
     res.json(stores);
 }
