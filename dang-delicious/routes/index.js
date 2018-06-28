@@ -15,6 +15,8 @@ res is the data we are sending back
 
 router.get('/',catchErrors(storeController.getStores));
 router.get('/stores',catchErrors(storeController.getStores));
+router.get('/stores/page/:page',catchErrors(storeController.getStores));
+
 router.get('/add', authController.isLoggedIn, storeController.addStore);
 
 router.post('/add', 
