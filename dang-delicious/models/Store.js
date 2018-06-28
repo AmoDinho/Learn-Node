@@ -40,6 +40,9 @@ const storeSchema = new mongoose.Schema({
         required:'You must supply an author'
     }
 
+} ,{
+    toJSON:{virtuals:true},
+    toObject:{virtuals:true}
 });
 
 //Define Indexes
@@ -77,4 +80,42 @@ storeSchema.statics.getTagsList = function(){
     ]);
 }
 
+
+storeSchema.statics.getTopStores = function(){
+    return this.aggregate([
+      //Lookup stores and populate the reviews
+      { $lookup: {
+          from: 'reviews', localField:'_id', foreignField:'store', as: 'reviews'}},
+          //filter for only items that have 2 or more reviews
+      {$match:{'reviews.1':{$exists:true}}},
+      //add the average reviews field
+      {$project: {
+        photo: '$$ROOT.photo',
+        name:'$$ROOT.name',
+        reviews: '$$ROOT.reviews',
+        slug: '$$ROOT.slug',
+        averageRating: {$avg: '$reviews.rating'}
+      }},
+      //sort it by our new field, highest reviews first
+      {$sort:{averageRating: -1}},
+      //limit to at most 10
+      {$limit: 10}
+    ]);
+}
+//find reviews where the stores id is equal to a Reviews store property
+storeSchema.virtual('reviews',{
+    ref:'Review',
+    localField:'_id',//which field on store
+    foreignField:'store'//WHich field on review
+});
+
+function autopopulate(next){
+    this.populate('reviews');
+    next();
+}
+storeSchema.pre('find', autopopulate);
+storeSchema.pre('findOne', autopopulate);
+
 module.exports = mongoose.model('Store', storeSchema);
+
+//pre=h.dump(store)
